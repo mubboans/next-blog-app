@@ -15,14 +15,27 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { createBlogAction, getAllBlogAction } from "./action";
 
 export default function OrganizationList() {
   const [title, setTitle] = React.useState("");
   const [body, setBody] = React.useState("");
-  function saveBlog() {
+  async function saveBlog() {
     console.log(title, '-->', body, 'Check Title N Body');
-    
+    await createBlogAction({
+      title,
+      body,
+      orgId: '1',
+      userId: '1',
+    })
   }
+  React.useEffect(() => {
+    return ()=>{
+      getAllBlogAction().then((res)=>{
+        console.log(res, 'res');
+       })
+    }
+  }, [])
   return (
     <main>
       <Navbar />
