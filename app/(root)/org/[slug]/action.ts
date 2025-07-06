@@ -8,7 +8,7 @@ import { eq } from 'drizzle-orm';
 export async function createBlogAction(createBlog: createBlog) {
     try {
         console.log(createBlog,'createBlog 9');
-      const result = await db.insert(blogTable).values(createBlog);
+       await db.insert(blogTable).values(createBlog);
       // Return a serialized response instead of the raw database result
       return { success: true, message: 'Blog created successfully' };
     } catch (error) {
@@ -45,5 +45,16 @@ export async function updateBlogAction(id: number, updateData: createBlog) {
     } catch (error) {
         console.log(error);
         throw error;
+    }
+}
+
+export async function getBlogbyId(orgId: string) {
+    try {
+        const blogs = await db.select().from(blogTable).where(eq(
+            blogTable?.orgId,orgId
+        ))
+        return blogs;
+    } catch (error) {
+       throw error; 
     }
 }

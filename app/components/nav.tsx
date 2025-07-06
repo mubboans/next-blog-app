@@ -10,13 +10,13 @@ export default function Navbar() {
 
   const navLinks = [
     { name: "Dashboard", href: "/dashboard" },
-    { name: "Team", href: "/team" },
-    { name: "Projects", href: "/projects" },
-    { name: "Calendar", href: "/calendar" },
+    { name: "Setting", href: "/setting" },
+    { name: "Pricing", href: "/pricing" },
+    // { name: "Calendar", href: "/calendar" },
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-200">
+    <nav className="bg-white border border-gray-200 rounded-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 justify-between">
           <div className="flex">
@@ -38,7 +38,7 @@ export default function Navbar() {
 
           <div className="hidden sm:ml-6 sm:flex sm:items-center sm:justify-center">
             <div className="flex gap-3 justify-center items-center">
-              <OrganizationSwitcher afterSelectOrganizationUrl="/org/:slug"/>
+              <OrganizationSwitcher afterSelectOrganizationUrl="/org/:slug" />
             </div>
 
             <div className="ml-4 mt-1 flex-shrink-0">

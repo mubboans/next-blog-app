@@ -1,5 +1,4 @@
 "use client";
-import Navbar from "@/app/components/nav";
 import { Button } from "@/components/ui/button";
 import * as React from "react";
 import {
@@ -15,11 +14,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { createBlogAction, deleteBlogAction, getAllBlogAction, updateBlogAction } from "./action";
+import { createBlogAction, deleteBlogAction, getBlogbyId, updateBlogAction } from "./action";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Building, User, Calendar, Edit, Trash } from "lucide-react";
 import { selectBlog, createBlog } from "@/db/schema";
+import { useParams } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
+
 
 const cleanText = (text: string, maxLength = 100) => {
   if (!text) return '';
@@ -34,11 +36,13 @@ const generateExcerpt = (body: string, maxLength = 150) => {
 };
 
 export default function OrganizationList() {
+    const params = useParams();
+    const slug = params?.slug as string;
   const [blog, setBlog] = React.useState<selectBlog | null>(null);
   const [blogs, setBlogs] = React.useState<selectBlog[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-
+  const { userId, orgId, orgSlug } = useAuth();
   async function saveBlog() {
     console.log(blog, '-->', 'Check Title N Body');
     setLoading(true);
@@ -48,14 +52,14 @@ export default function OrganizationList() {
         await updateBlogAction(blog.id, blog);
       } else {
       const blogData: createBlog = {
-        title: blog?.title || '',
-        body: blog?.body || '',
-        orgId: '1',
-        userId: '1',
+        title: blog?.title || "",
+        body: blog?.body || "",
+        orgId: orgId as string,
+        userId: "1",
       };
       await createBlogAction(blogData);
       // Refresh blogs after creating a new one
-      const updatedBlogs = await getAllBlogAction();
+      const updatedBlogs = await getBlogbyId(orgId as string);
       setBlogs(updatedBlogs);
       setBlog(null);
       setIsDialogOpen(false);
@@ -91,7 +95,25 @@ export default function OrganizationList() {
   React.useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const result = await getAllBlogAction();
+        console.log(slug, '-->', 'slug');
+        // const { userId } = useAuth();
+        console.log(userId,orgId, "userId");
+        
+        // const client = await clerkClient();
+        // console.log(client, "client");
+        
+        // const org = await client.organizations.getOrganization({
+        //   slug: slug,
+        // });
+        // console.log(org,'org');
+        
+        // const orgId = org.id;
+        // console.log(orgId, "orgId");
+        
+        const result = await getBlogbyId(orgId as string);
+        // const result = await getAllBlogAction();
+        console.log();
+        
         setBlogs(result);
       } catch (error) {
         console.error('Error fetching blogs:', error);
@@ -103,7 +125,7 @@ export default function OrganizationList() {
 
   return (
     <main>
-      <Navbar />
+      {/* <Navbar /> */}
       <div className="flex justify-around items-center mt-10">
         <h3>Organization List</h3>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -178,7 +200,7 @@ export default function OrganizationList() {
                 </Badge>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Building className="h-3 w-3" />
-                  <span>Org {blog.orgId.trim()}</span>
+                  <span>{orgSlug}</span>
                 </div>
               </div>
               
