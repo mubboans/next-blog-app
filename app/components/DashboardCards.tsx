@@ -1,5 +1,6 @@
 import { Users, Building2, PenTool } from "lucide-react";
 import { getAllBlogAction } from "../(root)/org/[slug]/action";
+import AddBlog from "./AddBlog";
 
 export default async function DashboardCards() {
     let allBlog = [];
@@ -50,9 +51,12 @@ export default async function DashboardCards() {
             </div>
             <div className="pt-2">
               <div className="text-2xl font-bold">{allBlog?.length || 0}</div>
-              <p className="text-xs text-muted-foreground mt-2">
-                +19% from last month
-              </p>
+              <div className="flex flex-row items-center justify-between space-y-0 pb-4">
+                <p className="text-xs text-muted-foreground mt-2">
+                  +19% from last month
+                </p>
+                <AddBlog/>
+              </div>
             </div>
           </div>
         </div>

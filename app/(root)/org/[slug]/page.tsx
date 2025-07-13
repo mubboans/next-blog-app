@@ -43,13 +43,29 @@ export default function OrganizationList() {
   const [loading, setLoading] = React.useState(false);
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const { userId, orgId, orgSlug } = useAuth();
+  const fetchBlogs = async () => {
+    try {
+        const result = await getBlogbyId(orgId as string);
+      setBlogs(result);
+      console.log('fetch new blogs');
+      
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+    }
+  };
   async function saveBlog() {
     console.log(blog, '-->', 'Check Title N Body');
     setLoading(true);
     try {
       // Use createBlog type for the insert operation (without id)
       if(blog?.id){
-        await updateBlogAction(blog.id, blog);
+        const bdata = {
+            title: blog?.title || "",
+            body: blog?.body || "",
+            orgId: orgId as string,
+            userId: userId as string,
+        }
+        await updateBlogAction(blog.id, bdata);
       } else {
       const blogData: createBlog = {
         title: blog?.title || "",
@@ -61,9 +77,10 @@ export default function OrganizationList() {
       // Refresh blogs after creating a new one
       const updatedBlogs = await getBlogbyId(orgId as string);
       setBlogs(updatedBlogs);
-      setBlog(null);
-      setIsDialogOpen(false);
     }
+    setBlog(null);
+    setIsDialogOpen(false);
+    fetchBlogs();
     } catch (error) {
       console.error('Error creating blog:', error);
     } finally {
@@ -75,7 +92,6 @@ export default function OrganizationList() {
     try {
         setBlog(blogItem);
         setIsDialogOpen(true);
-        await updateBlogAction(blogItem.id, blogItem);
     } catch (error) {
         console.error('Error updating blog:', error);
     }
@@ -93,33 +109,6 @@ export default function OrganizationList() {
   }
 
   React.useEffect(() => {
-    const fetchBlogs = async () => {
-      try {
-        console.log(slug, '-->', 'slug');
-        // const { userId } = useAuth();
-        console.log(userId,orgId, "userId");
-        
-        // const client = await clerkClient();
-        // console.log(client, "client");
-        
-        // const org = await client.organizations.getOrganization({
-        //   slug: slug,
-        // });
-        // console.log(org,'org');
-        
-        // const orgId = org.id;
-        // console.log(orgId, "orgId");
-        
-        const result = await getBlogbyId(orgId as string);
-        // const result = await getAllBlogAction();
-        console.log();
-        
-        setBlogs(result);
-      } catch (error) {
-        console.error('Error fetching blogs:', error);
-      }
-    };
-    
     fetchBlogs();
   }, []);
 
@@ -131,7 +120,9 @@ export default function OrganizationList() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <form>
             <DialogTrigger asChild>
-              <Button variant="outline" onClick={openCreateDialog}>Create Blog</Button>
+              <Button variant="outline" onClick={openCreateDialog}>
+                Create Blog
+              </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
@@ -146,9 +137,21 @@ export default function OrganizationList() {
                   <Input
                     id="title"
                     name="title"
-                    value={blog?.title || ''}
+                    value={blog?.title || ""}
                     placeholder="Please enter blog title"
-                    onChange={(e) => setBlog(prev => prev ? { ...prev, title: e.target.value } : { id: 0, title: e.target.value, body: '', orgId: '', userId: '' })}
+                    onChange={(e) =>
+                      setBlog((prev) =>
+                        prev
+                          ? { ...prev, title: e.target.value }
+                          : {
+                              id: 0,
+                              title: e.target.value,
+                              body: "",
+                              orgId: "",
+                              userId: "",
+                            }
+                      )
+                    }
                   />
                 </div>
                 <div className="grid gap-3">
@@ -156,9 +159,21 @@ export default function OrganizationList() {
                   <Textarea
                     id="body"
                     name="body"
-                    value={blog?.body || ''}
+                    value={blog?.body || ""}
                     placeholder="Please enter blog body"
-                    onChange={(e) => setBlog(prev => prev ? { ...prev, body: e.target.value } : { id: 0, title: '', body: e.target.value, orgId: '', userId: '' })}
+                    onChange={(e) =>
+                      setBlog((prev) =>
+                        prev
+                          ? { ...prev, body: e.target.value }
+                          : {
+                              id: 0,
+                              title: "",
+                              body: e.target.value,
+                              orgId: "",
+                              userId: "",
+                            }
+                      )
+                    }
                   />
                 </div>
               </div>
@@ -170,103 +185,108 @@ export default function OrganizationList() {
                   type="submit"
                   onClick={(e) => {
                     e.preventDefault();
-                    saveBlog()
+                    saveBlog();
                   }}
                   disabled={loading}
                 >
-                  {loading ? 'Saving...' : 'Save'}
+                  {loading ? "Saving..." : "Save"}
                 </Button>
               </DialogFooter>
             </DialogContent>
           </form>
         </Dialog>
       </div>
-      
+
       {/* Display blogs */}
- <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Latest Blog Posts</h1>
-        <p className="text-muted-foreground mt-2">Discover our latest articles and insights</p>
-      </div>
-      
-      {/* Responsive Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {blogs.map((blog: selectBlog) => (
-          <Card key={blog.id} className="flex flex-col hover:shadow-lg transition-shadow duration-200 border-border/50">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <Badge variant="secondary" className="text-xs">
-                  Blog #{blog.id}
-                </Badge>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Building className="h-3 w-3" />
-                  <span>{orgSlug}</span>
-                </div>
-              </div>
-              
-              <CardTitle className="text-lg leading-tight line-clamp-2 min-h-[3.5rem]">
-                {cleanText(blog.title, 60)}
-              </CardTitle>
-              
-              <CardDescription className="flex items-center gap-2 text-xs">
-                <User className="h-3 w-3" />
-                <span>User {blog.userId}</span>
-                <Calendar className="h-3 w-3 ml-2" />
-                <span>Recent</span>
-              </CardDescription>
-            </CardHeader>
-            
-            <CardContent className="flex-grow pb-4">
-              <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
-                {generateExcerpt(blog.body)}
-              </p>
-            </CardContent>
-            
-            <CardFooter className="pt-0">
-                 <div className="flex gap-2 w-full">
-              <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                  onClick={() => openEditDialog(blog)}
-                >
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => openDeleteDialog(blog)}
-                >
-                  <Trash className="h-4 w-4 mr-1" />
-                  Delete
-                </Button>
-                </div>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-      
-      {/* Empty State */}
-      {blogs.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-muted-foreground">
-            <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <h3 className="text-lg font-medium mb-2">No blog posts found</h3>
-            <p className="text-sm">Check back later for new content.</p>
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Latest Blog Posts
+          </h1>
+          <p className="text-muted-foreground mt-2">
+            Discover our latest articles and insights
+          </p>
         </div>
-      )}
-      
-      {/* Load More Button (if needed) */}
-      <div className="text-center mt-8">
-        <Button variant="outline">
-          Load More Posts
-        </Button>
+
+        {/* Responsive Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {blogs.map((blog: selectBlog) => (
+            <Card
+              key={blog.id}
+              className="flex flex-col hover:shadow-lg transition-shadow duration-200 border-border/50"
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs">
+                    Blog #{blog.id}
+                  </Badge>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Building className="h-3 w-3" />
+                    <span>{orgSlug}</span>
+                  </div>
+                </div>
+
+                <CardTitle className="text-lg leading-tight line-clamp-2 min-h-[3.5rem]">
+                  {cleanText(blog.title, 60)}
+                </CardTitle>
+
+                <CardDescription className="flex items-center gap-2 text-xs">
+                  <User className="h-3 w-3" />
+                  <span>User {slug}</span>
+                  <Calendar className="h-3 w-3 ml-2" />
+                  <span>Recent</span>
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="flex-grow pb-4">
+                <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed">
+                  {generateExcerpt(blog.body)}
+                </p>
+              </CardContent>
+
+              <CardFooter className="pt-0">
+                <div className="flex gap-2 w-full">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                    onClick={() => openEditDialog(blog)}
+                  >
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => openDeleteDialog(blog)}
+                  >
+                    <Trash className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                </div>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+
+        {/* Empty State */}
+        {blogs.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground">
+              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">No blog posts found</h3>
+              <p className="text-sm">Check back later for new content.</p>
+            </div>
+          </div>
+        )}
+
+        {/* Load More Button (if needed) */}
+        <div className="text-center mt-8">
+          <Button variant="outline">Load More Posts</Button>
+        </div>
       </div>
-    </div>
     </main>
   );
 }
